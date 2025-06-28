@@ -3,42 +3,41 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { Mail, ArrowUp, ChevronLeft, ChevronRight, Sparkles, Zap, Target } from 'lucide-react';
+import { Mail, ArrowUp, Sparkles, Zap, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
-  const [currentTemplate, setCurrentTemplate] = useState(0);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [stats, setStats] = useState({ revenue: 0, emails: 0, clients: 0 });
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isAnimating, setIsAnimating] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const emailTemplates = [
     {
       id: 1,
       title: "Newsletter Pro",
       preview: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=600&fit=crop",
-      color: "bg-gradient-to-br from-purple-500 to-pink-500"
+      color: "from-purple-500 to-pink-500"
     },
     {
       id: 2,
       title: "Sales Boost",
       preview: "https://images.unsplash.com/photo-1483058712412-4245e9b90334?w=400&h=600&fit=crop",
-      color: "bg-gradient-to-br from-blue-500 to-cyan-500"
+      color: "from-blue-500 to-cyan-500"
     },
     {
       id: 3,
       title: "Event Master",
       preview: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=600&fit=crop",
-      color: "bg-gradient-to-br from-orange-500 to-red-500"
+      color: "from-orange-500 to-red-500"
     },
     {
       id: 4,
       title: "Brand Story",
       preview: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=600&fit=crop",
-      color: "bg-gradient-to-br from-green-500 to-teal-500"
+      color: "from-green-500 to-teal-500"
     }
   ];
 
@@ -84,7 +83,74 @@ const Index = () => {
     }
   ];
 
-  // Intersection Observer for scroll animations
+  // Vanilla JS Carousel Implementation
+  useEffect(() => {
+    if (!carouselRef.current) return;
+
+    let currentSlide = 0;
+    const totalSlides = emailTemplates.length;
+    const carousel = carouselRef.current;
+    const slides = carousel.querySelectorAll('.carousel-slide');
+    const indicators = carousel.querySelectorAll('.indicator');
+    const prevBtn = carousel.querySelector('.prev-btn');
+    const nextBtn = carousel.querySelector('.next-btn');
+
+    function updateCarousel() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'next', 'prev');
+        if (index === currentSlide) {
+          slide.classList.add('active');
+        } else if (index === (currentSlide + 1) % totalSlides) {
+          slide.classList.add('next');
+        } else if (index === (currentSlide - 1 + totalSlides) % totalSlides) {
+          slide.classList.add('prev');
+        }
+      });
+
+      indicators.forEach((indicator, index) => {
+        indicator.classList.toggle('active', index === currentSlide);
+      });
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      updateCarousel();
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      updateCarousel();
+    }
+
+    function goToSlide(index: number) {
+      currentSlide = index;
+      updateCarousel();
+    }
+
+    // Event listeners
+    nextBtn?.addEventListener('click', nextSlide);
+    prevBtn?.addEventListener('click', prevSlide);
+    
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => goToSlide(index));
+    });
+
+    // Auto-rotate
+    const autoRotate = setInterval(nextSlide, 4000);
+
+    // Initialize
+    updateCarousel();
+
+    return () => {
+      clearInterval(autoRotate);
+      nextBtn?.removeEventListener('click', nextSlide);
+      prevBtn?.removeEventListener('click', prevSlide);
+      indicators.forEach((indicator, index) => {
+        indicator.removeEventListener('click', () => goToSlide(index));
+      });
+    };
+  }, [emailTemplates.length]);
+
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -103,7 +169,6 @@ const Index = () => {
     return () => observerRef.current?.disconnect();
   }, []);
 
-  // Mouse tracking for magnetic effects
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
@@ -113,19 +178,6 @@ const Index = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Enhanced Auto-rotate carousel with better timing
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
-        setIsAnimating(false);
-      }, 200);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Animate counters
   useEffect(() => {
     const animateCounters = () => {
       const duration = 2500;
@@ -156,7 +208,6 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Particle system
   useEffect(() => {
     const createParticle = () => {
       const particle = document.createElement('div');
@@ -176,26 +227,6 @@ const Index = () => {
 
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const nextTemplate = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
-        setIsAnimating(false);
-      }, 200);
-    }
-  };
-
-  const prevTemplate = () => {
-    if (!isAnimating) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentTemplate((prev) => (prev - 1 + emailTemplates.length) % emailTemplates.length);
-        setIsAnimating(false);
-      }, 200);
-    }
   };
 
   return (
@@ -265,86 +296,53 @@ const Index = () => {
               </div>
             </div>
             
-            {/* Enhanced Email Template Carousel */}
-            <div className="relative perspective-1000">
-              <div className="relative w-80 h-96 mx-auto transform-style-3d">
-                {emailTemplates.map((template, index) => {
-                  const isActive = index === currentTemplate;
-                  const isNext = index === (currentTemplate + 1) % emailTemplates.length;
-                  const isPrev = index === (currentTemplate - 1 + emailTemplates.length) % emailTemplates.length;
-                  
-                  return (
-                    <div
-                      key={template.id}
-                      className={cn(
-                        "absolute inset-0 transition-all duration-700 ease-in-out card-3d",
-                        isActive 
-                          ? "opacity-100 scale-100 z-20 rotate-0 translate-x-0 translate-y-0" 
-                          : isNext
-                          ? "opacity-60 scale-85 translate-x-12 translate-y-6 rotate-12 z-10"
-                          : isPrev
-                          ? "opacity-60 scale-85 -translate-x-12 -translate-y-6 -rotate-12 z-10"
-                          : "opacity-0 scale-70 translate-y-20 rotate-45 z-0",
-                        isAnimating && "duration-200"
-                      )}
-                    >
-                      <Card className="h-full shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden backface-hidden hover-3d">
-                        <div className={cn("h-full relative", template.color)}>
-                          <img 
-                            src={template.preview} 
-                            alt={template.title}
-                            className="w-full h-full object-cover opacity-20 transition-opacity duration-300 hover:opacity-40"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <h3 className="text-white text-2xl font-bold animate-pulse-slow">{template.title}</h3>
-                          </div>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+            {/* Vanilla JS Carousel */}
+            <div ref={carouselRef} className="carousel-container relative w-80 h-96 mx-auto perspective-1000">
+              <div className="carousel-wrapper relative w-full h-full transform-style-3d">
+                {emailTemplates.map((template, index) => (
+                  <div
+                    key={template.id}
+                    className="carousel-slide absolute inset-0 transition-all duration-700 ease-in-out opacity-0"
+                    data-color={template.color}
+                  >
+                    <Card className="h-full shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden backface-hidden hover-3d">
+                      <div className={cn("h-full relative bg-gradient-to-br", template.color)}>
+                        <img 
+                          src={template.preview} 
+                          alt={template.title}
+                          className="w-full h-full object-cover opacity-20 transition-opacity duration-300 hover:opacity-40"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <h3 className="text-white text-2xl font-bold animate-pulse-slow">{template.title}</h3>
                         </div>
-                      </Card>
-                    </div>
-                  );
-                })}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    </Card>
+                  </div>
+                ))}
               </div>
               
-              {/* Enhanced Carousel Controls */}
+              {/* Carousel Controls */}
               <div className="flex justify-center items-center mt-8 space-x-4">
-                <button
-                  onClick={prevTemplate}
-                  className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
-                  disabled={isAnimating}
-                >
-                  <ChevronLeft className="h-5 w-5 text-purple-600" />
+                <button className="prev-btn p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                 </button>
                 
                 <div className="flex space-x-3">
                   {emailTemplates.map((_, index) => (
                     <button
                       key={index}
-                      onClick={() => {
-                        if (!isAnimating) {
-                          setIsAnimating(true);
-                          setTimeout(() => {
-                            setCurrentTemplate(index);
-                            setIsAnimating(false);
-                          }, 200);
-                        }
-                      }}
-                      className={cn(
-                        "w-4 h-4 rounded-full transition-all duration-500 hover:scale-125",
-                        index === currentTemplate 
-                          ? "bg-purple-600 glow-effect scale-110 shadow-lg" 
-                          : "bg-gray-300 hover:bg-purple-400"
-                      )}
+                      className="indicator w-4 h-4 rounded-full bg-gray-300 hover:bg-purple-400 transition-all duration-500 hover:scale-125"
                     />
                   ))}
                 </div>
                 
-                <button
-                  onClick={nextTemplate}
-                  className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
-                  disabled={isAnimating}
-                >
-                  <ChevronRight className="h-5 w-5 text-purple-600" />
+                <button className="next-btn p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -352,7 +350,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Enhanced Stats Section */}
       <section className="py-20 bg-white relative overflow-hidden fade-in-section">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-50/50 to-blue-50/50"></div>
         <div className="container mx-auto px-6 relative z-10">
@@ -382,7 +379,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* About Us Section */}
       <section id="about" className="py-20 bg-gradient-to-r from-purple-50 to-blue-50 fade-in-section">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center space-y-8">
@@ -411,7 +407,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Case Studies Section */}
       <section id="case-studies" className="py-20 bg-white fade-in-section">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800 animate-fade-in-up">Success Stories</h2>
@@ -439,14 +434,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Designs Section */}
       <section id="designs" className="py-20 bg-gray-50 fade-in-section">
         <div className="container mx-auto px-6">
           <h2 className="text-4xl font-bold text-center mb-16 text-gray-800 animate-fade-in-up">Template Showcase</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-animation">
             {emailTemplates.map((template, index) => (
               <Card key={template.id} className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 card-3d overflow-hidden" style={{'--stagger-delay': index} as any}>
-                <div className={cn("h-64 relative overflow-hidden", template.color)}>
+                <div className={cn("h-64 relative overflow-hidden bg-gradient-to-br", template.color)}>
                   <img 
                     src={template.preview} 
                     alt={template.title}
@@ -463,7 +457,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Blog Section */}
       <section className="py-20 bg-white fade-in-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -482,83 +475,15 @@ const Index = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
                 <CardContent className="p-6">
-                  <p className="text-sm text-purple-600 mb-2 font-semibold">{post.date}</p>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
-                    {post.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4">{post.excerpt}</p>
-                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0 group-hover:translate-x-2 transition-transform duration-300">
-                    Read More →
-                  </Button>
+                  <div className="text-sm text-purple-600 mb-2">{post.date}</div>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800 group-hover:text-purple-600 transition-colors">{post.title}</h3>
+                  <p className="text-gray-600">{post.excerpt}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-blue-900/20"></div>
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Mail className="h-6 w-6 text-purple-400 animate-pulse-slow" />
-                <span className="text-xl font-bold">Fuelmails</span>
-              </div>
-              <p className="text-gray-400">Fueling Your Marketing Momentum</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Templates</a></li>
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Analytics</a></li>
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Automation</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Press</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white transition-all duration-300 hover:scale-105 glow-effect">
-                    Schedule a Call
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px] glass-effect">
-                  <DialogHeader>
-                    <DialogTitle>Schedule a Meeting</DialogTitle>
-                  </DialogHeader>
-                  <div className="p-4">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      className="rounded-md border pointer-events-auto"
-                    />
-                    <div className="mt-4">
-                      <Button className="w-full gradient-bg text-white hover:scale-105 transition-transform duration-300">
-                        Confirm Meeting
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Fuelmails. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
