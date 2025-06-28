@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +11,7 @@ const Index = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [stats, setStats] = useState({ revenue: 0, emails: 0, clients: 0 });
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isAnimating, setIsAnimating] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -113,11 +113,15 @@ const Index = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Auto-rotate carousel
+  // Enhanced Auto-rotate carousel with better timing
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
-    }, 4000);
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
+        setIsAnimating(false);
+      }, 200);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -172,6 +176,26 @@ const Index = () => {
 
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const nextTemplate = () => {
+    if (!isAnimating) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
+        setIsAnimating(false);
+      }, 200);
+    }
+  };
+
+  const prevTemplate = () => {
+    if (!isAnimating) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentTemplate((prev) => (prev - 1 + emailTemplates.length) % emailTemplates.length);
+        setIsAnimating(false);
+      }, 200);
+    }
   };
 
   return (
@@ -244,51 +268,84 @@ const Index = () => {
             {/* Enhanced Email Template Carousel */}
             <div className="relative perspective-1000">
               <div className="relative w-80 h-96 mx-auto transform-style-3d">
-                {emailTemplates.map((template, index) => (
-                  <div
-                    key={template.id}
-                    className={cn(
-                      "absolute inset-0 transition-all duration-1000 ease-out card-3d",
-                      index === currentTemplate 
-                        ? "opacity-100 scale-100 z-10 rotate-0" 
-                        : index === (currentTemplate + 1) % emailTemplates.length
-                        ? "opacity-70 scale-90 translate-x-8 translate-y-4 rotate-12 z-5"
-                        : index === (currentTemplate - 1 + emailTemplates.length) % emailTemplates.length
-                        ? "opacity-70 scale-90 -translate-x-8 -translate-y-4 -rotate-12 z-5"
-                        : "opacity-0 scale-75 rotate-45"
-                    )}
-                  >
-                    <Card className="h-full shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden backface-hidden hover-3d">
-                      <div className={cn("h-full relative", template.color)}>
-                        <img 
-                          src={template.preview} 
-                          alt={template.title}
-                          className="w-full h-full object-cover opacity-20 transition-opacity duration-300 hover:opacity-40"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <h3 className="text-white text-2xl font-bold animate-pulse-slow">{template.title}</h3>
+                {emailTemplates.map((template, index) => {
+                  const isActive = index === currentTemplate;
+                  const isNext = index === (currentTemplate + 1) % emailTemplates.length;
+                  const isPrev = index === (currentTemplate - 1 + emailTemplates.length) % emailTemplates.length;
+                  
+                  return (
+                    <div
+                      key={template.id}
+                      className={cn(
+                        "absolute inset-0 transition-all duration-700 ease-in-out card-3d",
+                        isActive 
+                          ? "opacity-100 scale-100 z-20 rotate-0 translate-x-0 translate-y-0" 
+                          : isNext
+                          ? "opacity-60 scale-85 translate-x-12 translate-y-6 rotate-12 z-10"
+                          : isPrev
+                          ? "opacity-60 scale-85 -translate-x-12 -translate-y-6 -rotate-12 z-10"
+                          : "opacity-0 scale-70 translate-y-20 rotate-45 z-0",
+                        isAnimating && "duration-200"
+                      )}
+                    >
+                      <Card className="h-full shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden backface-hidden hover-3d">
+                        <div className={cn("h-full relative", template.color)}>
+                          <img 
+                            src={template.preview} 
+                            alt={template.title}
+                            className="w-full h-full object-cover opacity-20 transition-opacity duration-300 hover:opacity-40"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <h3 className="text-white text-2xl font-bold animate-pulse-slow">{template.title}</h3>
+                          </div>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                      </div>
-                    </Card>
-                  </div>
-                ))}
+                      </Card>
+                    </div>
+                  );
+                })}
               </div>
               
               {/* Enhanced Carousel Controls */}
-              <div className="flex justify-center mt-8 space-x-3">
-                {emailTemplates.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentTemplate(index)}
-                    className={cn(
-                      "w-4 h-4 rounded-full transition-all duration-300 hover:scale-125",
-                      index === currentTemplate 
-                        ? "bg-purple-600 glow-effect scale-110" 
-                        : "bg-gray-300 hover:bg-purple-400"
-                    )}
-                  />
-                ))}
+              <div className="flex justify-center items-center mt-8 space-x-4">
+                <button
+                  onClick={prevTemplate}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                  disabled={isAnimating}
+                >
+                  <ChevronLeft className="h-5 w-5 text-purple-600" />
+                </button>
+                
+                <div className="flex space-x-3">
+                  {emailTemplates.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (!isAnimating) {
+                          setIsAnimating(true);
+                          setTimeout(() => {
+                            setCurrentTemplate(index);
+                            setIsAnimating(false);
+                          }, 200);
+                        }
+                      }}
+                      className={cn(
+                        "w-4 h-4 rounded-full transition-all duration-500 hover:scale-125",
+                        index === currentTemplate 
+                          ? "bg-purple-600 glow-effect scale-110 shadow-lg" 
+                          : "bg-gray-300 hover:bg-purple-400"
+                      )}
+                    />
+                  ))}
+                </div>
+                
+                <button
+                  onClick={nextTemplate}
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                  disabled={isAnimating}
+                >
+                  <ChevronRight className="h-5 w-5 text-purple-600" />
+                </button>
               </div>
             </div>
           </div>
