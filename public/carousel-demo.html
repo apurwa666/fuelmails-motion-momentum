@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Carousel Demo</title>
+    <link rel="stylesheet" href="carousel-styles.css">
+</head>
+<body>
+    <div class="carousel-container">
+        <div class="carousel-wrapper">
+            <div class="carousel-track" id="carouselTrack">
+                <div class="carousel-slide active" data-color="purple">
+                    <div class="slide-content">
+                        <h3>Newsletter Pro</h3>
+                        <p>Premium email templates</p>
+                    </div>
+                </div>
+                <div class="carousel-slide" data-color="blue">
+                    <div class="slide-content">
+                        <h3>Sales Boost</h3>
+                        <p>Convert more customers</p>
+                    </div>
+                </div>
+                <div class="carousel-slide" data-color="orange">
+                    <div class="slide-content">
+                        <h3>Event Master</h3>
+                        <p>Perfect for events</p>
+                    </div>
+                </div>
+                <div class="carousel-slide" data-color="green">
+                    <div class="slide-content">
+                        <h3>Brand Story</h3>
+                        <p>Tell your story</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="carousel-controls">
+            <button class="carousel-btn prev" onclick="prevSlide()">‹</button>
+            <div class="carousel-indicators">
+                <button class="indicator active" onclick="goToSlide(0)"></button>
+                <button class="indicator" onclick="goToSlide(1)"></button>
+                <button class="indicator" onclick="goToSlide(2)"></button>
+                <button class="indicator" onclick="goToSlide(3)"></button>
+            </div>
+            <button class="carousel-btn next" onclick="nextSlide()">›</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-slide');
+        const indicators = document.querySelectorAll('.indicator');
+        const totalSlides = slides.length;
+
+        function updateCarousel() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'next', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index === (currentSlide + 1) % totalSlides) {
+                    slide.classList.add('next');
+                } else if (index === (currentSlide - 1 + totalSlides) % totalSlides) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+
+        // Auto-rotate
+        setInterval(nextSlide, 4000);
+    </script>
+</body>
+</html>
