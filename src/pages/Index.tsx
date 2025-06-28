@@ -1,16 +1,19 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { Mail, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, ArrowUp, ChevronLeft, ChevronRight, Sparkles, Zap, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
   const [currentTemplate, setCurrentTemplate] = useState(0);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [stats, setStats] = useState({ revenue: 0, emails: 0, clients: 0 });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const emailTemplates = [
     {
@@ -81,19 +84,48 @@ const Index = () => {
     }
   ];
 
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    const elements = document.querySelectorAll('.fade-in-section');
+    elements.forEach((el) => observerRef.current?.observe(el));
+
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  // Mouse tracking for magnetic effects
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Auto-rotate carousel
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTemplate((prev) => (prev + 1) % emailTemplates.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   // Animate counters
   useEffect(() => {
     const animateCounters = () => {
-      const duration = 2000;
-      const steps = 60;
+      const duration = 2500;
+      const steps = 80;
       const revenueTarget = 2400000;
       const emailsTarget = 150000;
       const clientsTarget = 1200;
@@ -102,11 +134,12 @@ const Index = () => {
       const interval = setInterval(() => {
         currentStep++;
         const progress = currentStep / steps;
+        const easeOut = 1 - Math.pow(1 - progress, 3);
         
         setStats({
-          revenue: Math.floor(revenueTarget * progress),
-          emails: Math.floor(emailsTarget * progress),
-          clients: Math.floor(clientsTarget * progress)
+          revenue: Math.floor(revenueTarget * easeOut),
+          emails: Math.floor(emailsTarget * easeOut),
+          clients: Math.floor(clientsTarget * easeOut)
         });
 
         if (currentStep >= steps) {
@@ -115,8 +148,26 @@ const Index = () => {
       }, duration / steps);
     };
 
-    const timer = setTimeout(animateCounters, 1000);
+    const timer = setTimeout(animateCounters, 1500);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Particle system
+  useEffect(() => {
+    const createParticle = () => {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.animationDelay = Math.random() * 15 + 's';
+      document.body.appendChild(particle);
+
+      setTimeout(() => {
+        particle.remove();
+      }, 15000);
+    };
+
+    const particleInterval = setInterval(createParticle, 3000);
+    return () => clearInterval(particleInterval);
   }, []);
 
   const scrollToSection = (sectionId: string) => {
@@ -124,26 +175,26 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+      <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100 glass-effect">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Mail className="h-8 w-8 text-purple-600" />
+            <div className="flex items-center space-x-2 magnetic-effect">
+              <Mail className="h-8 w-8 text-purple-600 animate-pulse-slow" />
               <span className="text-2xl font-bold text-gradient">Fuelmails</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <button onClick={() => scrollToSection('about')} className="text-gray-600 hover:text-purple-600 transition-colors">
+              <button onClick={() => scrollToSection('about')} className="text-gray-600 hover:text-purple-600 transition-all duration-300 hover:scale-110 magnetic-effect">
                 About Us
               </button>
-              <button onClick={() => scrollToSection('case-studies')} className="text-gray-600 hover:text-purple-600 transition-colors">
+              <button onClick={() => scrollToSection('case-studies')} className="text-gray-600 hover:text-purple-600 transition-all duration-300 hover:scale-110 magnetic-effect">
                 Case Studies
               </button>
-              <button onClick={() => scrollToSection('designs')} className="text-gray-600 hover:text-purple-600 transition-colors">
+              <button onClick={() => scrollToSection('designs')} className="text-gray-600 hover:text-purple-600 transition-all duration-300 hover:scale-110 magnetic-effect">
                 Designs
               </button>
-              <a href="/blog" className="text-gray-600 hover:text-purple-600 transition-colors">
+              <a href="/blog" className="text-gray-600 hover:text-purple-600 transition-all duration-300 hover:scale-110 magnetic-effect">
                 Blog
               </a>
             </div>
@@ -152,70 +203,89 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 pb-20 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
-        <div className="container mx-auto px-6">
+      <section ref={heroRef} className="relative pt-24 pb-20 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 overflow-hidden">
+        {/* Floating background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-200 rounded-full opacity-20 floating-element"></div>
+          <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-blue-200 rounded-full opacity-20 floating-element animate-float-delayed"></div>
+          <div className="absolute top-1/2 left-3/4 w-16 h-16 bg-pink-200 rounded-full opacity-20 animate-bounce-slow"></div>
+        </div>
+
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="text-gradient">Fueling Your</span><br />
-                <span className="text-gray-800">Marketing Momentum</span>
+            <div className="space-y-8 fade-in-section">
+              <div className="flex items-center space-x-2 mb-4">
+                <Sparkles className="h-6 w-6 text-purple-600 animate-rotate-slow" />
+                <span className="text-purple-600 font-semibold">Premium Email Marketing Platform</span>
+              </div>
+              
+              <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
+                <span className="text-gradient text-shadow-glow animate-scale-in">Fueling Your</span><br />
+                <span className="text-gray-800 animate-fade-in-left">Marketing Momentum</span>
               </h1>
-              <p className="text-xl text-gray-600 leading-relaxed">
+              
+              <p className="text-xl text-gray-600 leading-relaxed animate-fade-in-up">
                 Transform your email marketing with professionally designed templates 
                 and powerful performance tracking that drives real results.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="gradient-bg text-white hover:opacity-90 transition-opacity">
+              
+              <div className="flex flex-col sm:flex-row gap-4 stagger-animation">
+                <Button size="lg" className="gradient-bg text-white hover:opacity-90 transition-all duration-300 hover:scale-105 glow-effect magnetic-effect" style={{'--stagger-delay': 0} as any}>
+                  <Zap className="mr-2 h-5 w-5" />
                   Start Free Trial
                 </Button>
-                <Button variant="outline" size="lg" className="border-purple-300 text-purple-600 hover:bg-purple-50">
+                <Button variant="outline" size="lg" className="border-purple-300 text-purple-600 hover:bg-purple-50 transition-all duration-300 hover:scale-105 magnetic-effect" style={{'--stagger-delay': 1} as any}>
+                  <Target className="mr-2 h-5 w-5" />
                   Watch Demo
                 </Button>
               </div>
             </div>
             
-            {/* Email Template Carousel */}
-            <div className="relative">
-              <div className="relative w-80 h-96 mx-auto">
+            {/* Enhanced Email Template Carousel */}
+            <div className="relative perspective-1000">
+              <div className="relative w-80 h-96 mx-auto transform-style-3d">
                 {emailTemplates.map((template, index) => (
                   <div
                     key={template.id}
                     className={cn(
-                      "absolute inset-0 transition-all duration-700 ease-in-out",
+                      "absolute inset-0 transition-all duration-1000 ease-out card-3d",
                       index === currentTemplate 
-                        ? "opacity-100 scale-100 z-10" 
+                        ? "opacity-100 scale-100 z-10 rotate-0" 
                         : index === (currentTemplate + 1) % emailTemplates.length
-                        ? "opacity-70 scale-95 translate-x-8 z-5"
+                        ? "opacity-70 scale-90 translate-x-8 translate-y-4 rotate-12 z-5"
                         : index === (currentTemplate - 1 + emailTemplates.length) % emailTemplates.length
-                        ? "opacity-70 scale-95 -translate-x-8 z-5"
-                        : "opacity-0 scale-90"
+                        ? "opacity-70 scale-90 -translate-x-8 -translate-y-4 -rotate-12 z-5"
+                        : "opacity-0 scale-75 rotate-45"
                     )}
                   >
-                    <Card className="h-full shadow-2xl hover:shadow-3xl transition-shadow duration-300 overflow-hidden">
-                      <div className={cn("h-full", template.color)}>
+                    <Card className="h-full shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden backface-hidden hover-3d">
+                      <div className={cn("h-full relative", template.color)}>
                         <img 
                           src={template.preview} 
                           alt={template.title}
-                          className="w-full h-full object-cover opacity-20"
+                          className="w-full h-full object-cover opacity-20 transition-opacity duration-300 hover:opacity-40"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <h3 className="text-white text-2xl font-bold">{template.title}</h3>
+                          <h3 className="text-white text-2xl font-bold animate-pulse-slow">{template.title}</h3>
                         </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                       </div>
                     </Card>
                   </div>
                 ))}
               </div>
               
-              {/* Carousel Controls */}
-              <div className="flex justify-center mt-6 space-x-2">
+              {/* Enhanced Carousel Controls */}
+              <div className="flex justify-center mt-8 space-x-3">
                 {emailTemplates.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentTemplate(index)}
                     className={cn(
-                      "w-3 h-3 rounded-full transition-colors",
-                      index === currentTemplate ? "bg-purple-600" : "bg-gray-300"
+                      "w-4 h-4 rounded-full transition-all duration-300 hover:scale-125",
+                      index === currentTemplate 
+                        ? "bg-purple-600 glow-effect scale-110" 
+                        : "bg-gray-300 hover:bg-purple-400"
                     )}
                   />
                 ))}
@@ -225,48 +295,58 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-6">
+      {/* Enhanced Stats Section */}
+      <section className="py-20 bg-white relative overflow-hidden fade-in-section">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-50/50 to-blue-50/50"></div>
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center space-y-4">
-              <div className="text-4xl lg:text-5xl font-bold text-gradient">
+            <div className="text-center space-y-4 group">
+              <div className="text-5xl lg:text-6xl font-bold text-gradient transition-all duration-300 group-hover:scale-110">
                 ${stats.revenue.toLocaleString()}
               </div>
-              <p className="text-gray-600 text-lg">Total Revenue Generated</p>
+              <p className="text-gray-600 text-lg group-hover:text-purple-600 transition-colors">Total Revenue Generated</p>
+              <div className="w-16 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto rounded-full"></div>
             </div>
-            <div className="text-center space-y-4">
-              <div className="text-4xl lg:text-5xl font-bold text-gradient">
+            <div className="text-center space-y-4 group">
+              <div className="text-5xl lg:text-6xl font-bold text-gradient transition-all duration-300 group-hover:scale-110">
                 {stats.emails.toLocaleString()}
               </div>
-              <p className="text-gray-600 text-lg">Emails Sent</p>
+              <p className="text-gray-600 text-lg group-hover:text-purple-600 transition-colors">Emails Sent</p>
+              <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 mx-auto rounded-full"></div>
             </div>
-            <div className="text-center space-y-4">
-              <div className="text-4xl lg:text-5xl font-bold text-gradient">
+            <div className="text-center space-y-4 group">
+              <div className="text-5xl lg:text-6xl font-bold text-gradient transition-all duration-300 group-hover:scale-110">
                 {stats.clients.toLocaleString()}+
               </div>
-              <p className="text-gray-600 text-lg">Our Clients</p>
+              <p className="text-gray-600 text-lg group-hover:text-purple-600 transition-colors">Our Clients</p>
+              <div className="w-16 h-1 bg-gradient-to-r from-orange-500 to-red-500 mx-auto rounded-full"></div>
             </div>
           </div>
         </div>
       </section>
 
       {/* About Us Section */}
-      <section id="about" className="py-20 bg-gradient-to-r from-purple-50 to-blue-50">
+      <section id="about" className="py-20 bg-gradient-to-r from-purple-50 to-blue-50 fade-in-section">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <h2 className="text-4xl font-bold text-gray-800">About Fuelmails</h2>
-            <p className="text-xl text-gray-600 leading-relaxed">
+            <h2 className="text-4xl font-bold text-gray-800 animate-fade-in-up">About Fuelmails</h2>
+            <p className="text-xl text-gray-600 leading-relaxed animate-fade-in-up">
               We're passionate about helping businesses unlock the full potential of email marketing. 
               Our platform combines beautiful design with powerful analytics to deliver campaigns that convert.
             </p>
             <div className="grid md:grid-cols-2 gap-8 mt-12">
-              <Card className="p-6 hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4 text-purple-600">Professional Templates</h3>
+              <Card className="p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 card-3d group">
+                <div className="flex items-center mb-4">
+                  <Sparkles className="h-8 w-8 text-purple-600 mr-3 group-hover:animate-rotate-slow" />
+                  <h3 className="text-xl font-semibold text-purple-600">Professional Templates</h3>
+                </div>
                 <p className="text-gray-600">Choose from hundreds of professionally designed templates that are proven to convert.</p>
               </Card>
-              <Card className="p-6 hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-semibold mb-4 text-purple-600">Advanced Analytics</h3>
+              <Card className="p-6 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 card-3d group">
+                <div className="flex items-center mb-4">
+                  <Target className="h-8 w-8 text-purple-600 mr-3 group-hover:animate-pulse-slow" />
+                  <h3 className="text-xl font-semibold text-purple-600">Advanced Analytics</h3>
+                </div>
                 <p className="text-gray-600">Track performance with detailed insights and optimize your campaigns for maximum ROI.</p>
               </Card>
             </div>
@@ -275,22 +355,25 @@ const Index = () => {
       </section>
 
       {/* Case Studies Section */}
-      <section id="case-studies" className="py-20 bg-white">
+      <section id="case-studies" className="py-20 bg-white fade-in-section">
         <div className="container mx-auto px-6">
-          <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">Success Stories</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <h2 className="text-4xl font-bold text-center mb-16 text-gray-800 animate-fade-in-up">Success Stories</h2>
+          <div className="grid md:grid-cols-3 gap-8 stagger-animation">
             {caseStudies.map((study, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden">
-                <div className="relative">
+              <Card key={index} className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 card-3d overflow-hidden" style={{'--stagger-delay': index} as any}>
+                <div className="relative overflow-hidden">
                   <img 
                     src={study.image} 
                     alt={study.title}
-                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-4 left-4 right-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="text-sm font-semibold">View Case Study →</div>
+                  </div>
                 </div>
                 <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-2 text-gray-800">{study.title}</h3>
+                  <h3 className="text-xl font-semibold mb-2 text-gray-800 group-hover:text-purple-600 transition-colors">{study.title}</h3>
                   <p className="text-gray-600">{study.description}</p>
                 </CardContent>
               </Card>
@@ -300,21 +383,22 @@ const Index = () => {
       </section>
 
       {/* Designs Section */}
-      <section id="designs" className="py-20 bg-gray-50">
+      <section id="designs" className="py-20 bg-gray-50 fade-in-section">
         <div className="container mx-auto px-6">
-          <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">Template Showcase</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <h2 className="text-4xl font-bold text-center mb-16 text-gray-800 animate-fade-in-up">Template Showcase</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-animation">
             {emailTemplates.map((template, index) => (
-              <Card key={template.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden">
-                <div className={cn("h-64 relative", template.color)}>
+              <Card key={template.id} className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 card-3d overflow-hidden" style={{'--stagger-delay': index} as any}>
+                <div className={cn("h-64 relative overflow-hidden", template.color)}>
                   <img 
                     src={template.preview} 
                     alt={template.title}
-                    className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity"
+                    className="w-full h-full object-cover opacity-30 group-hover:opacity-60 transition-all duration-500 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <h3 className="text-white text-xl font-bold">{template.title}</h3>
+                    <h3 className="text-white text-xl font-bold group-hover:scale-110 transition-transform duration-300">{template.title}</h3>
                   </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
               </Card>
             ))}
@@ -323,27 +407,30 @@ const Index = () => {
       </section>
 
       {/* Blog Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white fade-in-section">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-gray-800">Read Our Blog</h2>
-            <p className="text-xl text-gray-600">Stay updated with the latest email marketing insights and strategies</p>
+            <h2 className="text-4xl font-bold mb-4 text-gray-800 animate-fade-in-up">Read Our Blog</h2>
+            <p className="text-xl text-gray-600 animate-fade-in-up">Stay updated with the latest email marketing insights and strategies</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
-              <Card key={post.id} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden cursor-pointer">
-                <img 
-                  src={post.image} 
-                  alt={post.title}
-                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                />
+          <div className="grid md:grid-cols-3 gap-8 stagger-animation">
+            {blogPosts.map((post, index) => (
+              <Card key={post.id} className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-4 card-3d overflow-hidden cursor-pointer" style={{'--stagger-delay': index} as any}>
+                <div className="relative overflow-hidden">
+                  <img 
+                    src={post.image} 
+                    alt={post.title}
+                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
                 <CardContent className="p-6">
-                  <p className="text-sm text-purple-600 mb-2">{post.date}</p>
-                  <h3 className="text-xl font-semibold mb-3 text-gray-800 group-hover:text-purple-600 transition-colors">
+                  <p className="text-sm text-purple-600 mb-2 font-semibold">{post.date}</p>
+                  <h3 className="text-xl font-semibold mb-3 text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
                     {post.title}
                   </h3>
                   <p className="text-gray-600 mb-4">{post.excerpt}</p>
-                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0">
+                  <Button variant="ghost" className="text-purple-600 hover:text-purple-700 p-0 group-hover:translate-x-2 transition-transform duration-300">
                     Read More →
                   </Button>
                 </CardContent>
@@ -354,12 +441,13 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-6">
+      <footer className="bg-gray-900 text-white py-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/20 to-blue-900/20"></div>
+        <div className="container mx-auto px-6 relative z-10">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Mail className="h-6 w-6 text-purple-400" />
+                <Mail className="h-6 w-6 text-purple-400 animate-pulse-slow" />
                 <span className="text-xl font-bold">Fuelmails</span>
               </div>
               <p className="text-gray-400">Fueling Your Marketing Momentum</p>
@@ -367,28 +455,28 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Templates</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Analytics</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Automation</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Templates</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Analytics</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Automation</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors hover:translate-x-1 duration-300 inline-block">Press</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Contact</h4>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white">
+                  <Button variant="outline" className="w-full border-purple-400 text-purple-400 hover:bg-purple-400 hover:text-white transition-all duration-300 hover:scale-105 glow-effect">
                     Schedule a Call
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] glass-effect">
                   <DialogHeader>
                     <DialogTitle>Schedule a Meeting</DialogTitle>
                   </DialogHeader>
@@ -400,7 +488,7 @@ const Index = () => {
                       className="rounded-md border pointer-events-auto"
                     />
                     <div className="mt-4">
-                      <Button className="w-full gradient-bg text-white">
+                      <Button className="w-full gradient-bg text-white hover:scale-105 transition-transform duration-300">
                         Confirm Meeting
                       </Button>
                     </div>
