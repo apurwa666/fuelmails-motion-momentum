@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
-import { Mail, ArrowUp, Sparkles, Zap, Target } from 'lucide-react';
+import { Mail, ArrowUp, Sparkles, Zap, Target, CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Index = () => {
@@ -484,6 +484,84 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer Section with Calendar */}
+      <footer className="py-20 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-1/4 left-1/6 w-40 h-40 bg-purple-400 rounded-full opacity-30 floating-element"></div>
+          <div className="absolute bottom-1/4 right-1/6 w-32 h-32 bg-blue-400 rounded-full opacity-20 animate-float-delayed"></div>
+        </div>
+
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            {/* Footer Content */}
+            <div className="space-y-8">
+              <div className="flex items-center space-x-2">
+                <Mail className="h-10 w-10 text-purple-300" />
+                <span className="text-3xl font-bold text-white">Fuelmails</span>
+              </div>
+              
+              <p className="text-lg text-purple-100 leading-relaxed max-w-md">
+                Transform your email marketing with professional templates and powerful analytics that drive real results.
+              </p>
+              
+              <div className="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h4 className="text-xl font-semibold mb-4 text-purple-200">Quick Links</h4>
+                  <ul className="space-y-2">
+                    <li><button onClick={() => scrollToSection('about')} className="text-purple-100 hover:text-white transition-colors">About Us</button></li>
+                    <li><button onClick={() => scrollToSection('case-studies')} className="text-purple-100 hover:text-white transition-colors">Case Studies</button></li>
+                    <li><button onClick={() => scrollToSection('designs')} className="text-purple-100 hover:text-white transition-colors">Templates</button></li>
+                    <li><a href="/blog" className="text-purple-100 hover:text-white transition-colors">Blog</a></li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="text-xl font-semibold mb-4 text-purple-200">Contact Info</h4>
+                  <div className="space-y-2 text-purple-100">
+                    <p>Email: hello@fuelmails.com</p>
+                    <p>Phone: (555) 123-4567</p>
+                    <p>Support: 24/7 Available</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Calendar Section */}
+            <div className="flex flex-col items-center space-y-6">
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-4">
+                  <CalendarIcon className="h-8 w-8 text-purple-300" />
+                  <h3 className="text-2xl font-bold text-white">Schedule a Demo</h3>
+                </div>
+                <p className="text-purple-100 mb-6">Pick a date that works best for you</p>
+              </div>
+              
+              <Card className="bg-white/10 backdrop-blur-md border-purple-300/20 p-6 rounded-xl shadow-2xl">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  className="text-white [&_.rdp-button_:not([disabled])]:text-white [&_.rdp-day_selected]:bg-purple-600 [&_.rdp-day_selected]:text-white [&_.rdp-day:hover]:bg-purple-500/50 [&_.rdp-head_cell]:text-purple-200"
+                  disabled={{ before: new Date() }}
+                />
+                {date && (
+                  <div className="mt-4 text-center">
+                    <p className="text-purple-100 mb-3">Selected: {date.toDateString()}</p>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 hover:scale-105">
+                      Book Demo for This Date
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
+          
+          <div className="border-t border-purple-400/20 mt-16 pt-8 text-center">
+            <p className="text-purple-200">© 2024 Fuelmails. All rights reserved. Built with passion for email marketing excellence.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
